@@ -14,7 +14,9 @@ public class Calculatrice implements Observable {
 	private Double valEnr = null;
 	private Signe signeEnr = null;
 
-	private boolean resetAff = false;// Permet la remise à zéro de l'affichage au prochain chiffre insérer
+	private boolean resetAff = false;// Permet la remise à zéro de l'affichage au prochain chiffre insérer après
+										// avoir taper un signe
+	private boolean reset = false;// Permet la remise à zéro après avoir tapé égal.
 
 	private void calculer() {
 		// Effectue le calcul entre la valeur enregistrée et la valeur affichée avec le
@@ -43,28 +45,36 @@ public class Calculatrice implements Observable {
 		valAff = "0";
 		valEnr = null;
 		signeEnr = null;
+		resetAff = false;
+		reset = false;
+		this.updateObservateur();
 	}
 
 	public void calcul(Signe s) {
-		if (valEnr == null) {
-			valEnr = Double.valueOf(valAff);
-		} else {
-			calculer();
+		reset = false;
+		if (!resetAff) {
+			if (valEnr == null) {
+				valEnr = Double.valueOf(valAff);
+			} else {
+				calculer();
+			}
+			resetAff = true;
+			this.updateObservateur();
 		}
 		signeEnr = s;
-		resetAff = true;
 	}
 
 	public void egal() {
 		if (valEnr != null) {
 			calculer();
 			valEnr = null;
-			resetAff = true;
+			reset = true;
 		}
+		this.updateObservateur();
 	}
 
 	public void chiffre(int i) {
-		if (resetAff) {
+		if (resetAff||reset) {
 			valAff = "0";
 			resetAff = false;
 		}
@@ -73,6 +83,7 @@ public class Calculatrice implements Observable {
 			valAff = "" + i;
 		else
 			valAff += i;
+		this.updateObservateur();
 	}
 
 	public void point() {
@@ -82,24 +93,17 @@ public class Calculatrice implements Observable {
 		}
 		if (!valAff.contains("."))
 			valAff += ".";
+		this.updateObservateur();
 	}
 
-	public String getValAff() {
-		return valAff;
-	}
-
-	// Ajoute un observateur à la liste
 	public void addObservateur(Observateur obs) {
 		this.listObservateur.add(obs);
 	}
 
-	// Retire tous les observateurs de la liste
 	public void delObservateur() {
 		this.listObservateur = new ArrayList<Observateur>();
 	}
 
-	// Avertit les observateurs que l'objet observable a changé
-	// et invoque la méthode update() de chaque observateur
 	public void updateObservateur() {
 		for (Observateur obs : this.listObservateur)
 			obs.update(valAff);
